@@ -11,7 +11,7 @@ cfg                           = __C
 # YOLO options
 __C.YOLO                      = edict()
 
-__C.YOLO.CLASSES              = "./data/classes/coco.names"
+__C.YOLO.CLASSES              = "./data/classes/pamela.names"
 __C.YOLO.ANCHORS              = [12,16, 19,36, 40,28, 36,75, 76,55, 72,146, 142,110, 192,243, 459,401]
 __C.YOLO.STRIDES              = [8, 16, 32]
 __C.YOLO.XYSCALE              = [1.2, 1.1, 1.05]
