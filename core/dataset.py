@@ -14,8 +14,7 @@ class Dataset(object):
     """implement Dataset here"""
 
     def __init__(self, FLAGS, is_training: bool, dataset_type: str = "converted_coco"):
-        self.tiny = FLAGS.tiny
-        self.strides, self.anchors, NUM_CLASS, XYSCALE = utils.load_config(FLAGS)
+        self.strides, self.anchors, NUM_CLASS, XYSCALE = utils.load_config()
         self.dataset_type = dataset_type
 
         self.annot_path = (
