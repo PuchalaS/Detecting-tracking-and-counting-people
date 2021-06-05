@@ -4,6 +4,7 @@ import colorsys
 import numpy as np
 import tensorflow as tf
 from core.config import cfg
+import os
 
 def load_freeze_layer():
     return ['conv2d_93', 'conv2d_101', 'conv2d_109']
@@ -349,3 +350,17 @@ def unfreeze_all(model, frozen=False):
         for l in model.layers:
             unfreeze_all(l, frozen)
 
+def create_dirs(dirs):
+    """
+    dirs - a list of directories to create if these directories are not found
+    :param dirs:
+    :return exit_code: 0:success -1:failed
+    """
+    try:
+        for dir_ in dirs:
+            if not os.path.exists(dir_):
+                os.makedirs(dir_)
+        return 0
+    except Exception as err:
+        print("Creating directories error: {0}".format(err))
+        exit(-1)
