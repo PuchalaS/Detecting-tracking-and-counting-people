@@ -106,3 +106,8 @@ save_model.py:
    Huge shoutout goes to hunglc007 and nwojke for creating the backbones of this repository:
   * [tensorflow-yolov4-tflite](https://github.com/hunglc007/tensorflow-yolov4-tflite)
   * [Deep SORT Repository](https://github.com/nwojke/deep_sort)
+
+### To do:
+- dorobić logikę aplikacji zliczającą wchodzących i wychodzących ludzi 
+- evaluacja śledzenia (MOTA)
+- 
