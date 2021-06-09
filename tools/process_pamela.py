@@ -1,15 +1,16 @@
 
-import time
 import os 
+import sys
+sys.path.append('.')
 from absl import app, flags, logging
 from absl.flags import FLAGS
-from core.config import cfg
+from config.defaults import cfg
 from PIL import Image
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-from core.utils import create_dirs
+from utils.utils import create_dirs
 import pandas as pd
 
 
@@ -18,10 +19,10 @@ flags.DEFINE_string('output_images_dir', 'data/dataset/images', 'path to output 
 flags.DEFINE_integer('size', 416, 'resize images to')
 flags.DEFINE_string('video_dir', 'data/dataset/video', 'path to directory containing train and test video folders')
 flags.DEFINE_string('csv_dir', 'data/dataset/annotations', 'path to directory containing train and test annotations folders')
-flags.DEFINE_string('output', './outputs/boxes.avi', 'path to output video')
+flags.DEFINE_string('output_dir', './outputs', 'path to output video')
 flags.DEFINE_string('output_format', 'XVID', 'codec used in VideoWriter when saving video to file')
 flags.DEFINE_boolean('dont_show', False, 'dont show video output')
-flags.DEFINE_boolean('create_imgs', False, 'dont show video output')
+flags.DEFINE_boolean('save_GT_videos', False, 'save video with boxes from ground truth files')
 
 
 def main(_argv):
@@ -47,7 +48,7 @@ def main(_argv):
             height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
             fps = int(vid.get(cv2.CAP_PROP_FPS))
             codec = cv2.VideoWriter_fourcc(*FLAGS.output_format)
-            out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
+            out = cv2.VideoWriter(FLAGS.output_dir +'/'+os.path.basename(video_path)[:-4] + "-GT.avi", codec, fps, (width, height))
             input_size = FLAGS.size
 
             file_name = os.path.basename(video_path)
@@ -71,12 +72,10 @@ def main(_argv):
                 frame_num +=1
                 print('Frame #: ', frame_num)
 
-                
-                frame_size = frame.shape[:2]
+            
                 image_data = cv2.resize(frame, (input_size, input_size))
                 image_data = image_data / 255.
                 image_data = image_data[np.newaxis, ...].astype(np.float32)
-                start_time = time.time()
 
                 #initialize color map
                 cmap = plt.get_cmap('tab20b')
@@ -94,34 +93,31 @@ def main(_argv):
 
                     center_x = top_x + int(box_width/2)
                     center_y = top_y + int(box_height/2)
-                    #save frame to .jpg for traning purposes
-                    if FLAGS.create_imgs:
-                        if len(str(frame_num)) == 3:
-                            frame_name = "0" + str(frame_num)
-                        else:
-                            frame_name = str(frame_num)
-                        
-                        save_name_jpg = (f"{FLAGS.output_images_dir}/{_set}/{file_name[:-4]}_{frame_name}.jpg")
-                        save_name_annot = (f"{FLAGS.output_images_dir}/{_set}/{file_name[:-4]}_{frame_name}.txt")
-                        if dx == 0:
-                            cv2.imwrite(save_name_jpg, frame)
-                        processed_csv = f"{save_name_jpg} {top_x},{top_y},{box_width},{box_height},0"
-                        processed_csv_data.append(processed_csv)
-                        yolo_annot = (f"0 {center_x/width} {center_y/height} {box_width/width} {box_height/height}")
-                        txt_file.append(yolo_annot)
-                
 
+                    #save frame to .jpg for traning purposes
+
+                    if len(str(frame_num)) == 3:
+                        frame_name = "0" + str(frame_num)
+                    else:
+                        frame_name = str(frame_num)
+                    
+                    save_name_jpg = (f"{FLAGS.output_images_dir}/{_set}/{file_name[:-4]}_{frame_name}.jpg")
+                    save_name_annot = (f"{FLAGS.output_images_dir}/{_set}/{file_name[:-4]}_{frame_name}.txt")
+                    if dx == 0:
+                        cv2.imwrite(save_name_jpg, frame)
+                    yolo_annot = (f"0 {center_x/width} {center_y/height} {box_width/width} {box_height/height}")
+                    txt_file.append(yolo_annot)
+                
 
                     # draw bbox on screen
                     color = colors[int(person_id) % len(colors)]
                     color = [i * 255 for i in color]
                     cv2.rectangle(frame, (int(top_x), int(top_y)), (int(top_x + box_width), int(top_y + box_height)), color, 2)
                     cv2.rectangle(frame, (int(top_x), int(top_y) -30), (int(top_x)+(len('person')+len(str(person_id)))*16,  int(top_y)), color, -1)
-                    #cv2.circle(frame, (center_x,center_y), radius=5, color=(0, 0, 255), thickness=2)
                     cv2.putText(frame, 'person' + "-" + str(person_id),(int(top_x), int(top_y-10)),0, 0.75, (255,255,255),2)
 
                     
-                if FLAGS.create_imgs and save_name_annot:
+                if save_name_annot:
                     with open(save_name_annot, "w") as f:
                         for line in txt_file:
                             f.write("%s\n" % line)
@@ -133,16 +129,12 @@ def main(_argv):
                     cv2.imshow("Output Video", result)
                 
                 # if output flag is set, save video file
-                if FLAGS.output:
+                if FLAGS.save_GT_videos:
                     out.write(result)
                 if cv2.waitKey(1) & 0xFF == ord('q'): break
                 
 
             cv2.destroyAllWindows()
-        with open(f"{FLAGS.csv_dir}/{_set}/{_set}.txt", "w") as f:
-            for s in processed_csv_data:
-                f.write(str(s) +"\n")
-        processed_csv_data = []
 
 
 if __name__ == '__main__':
