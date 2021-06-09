@@ -8,26 +8,27 @@ if len(physical_devices) > 0:
     tf.config.experimental.set_memory_growth(physical_devices[0], True)
 from absl import app, flags, logging
 from absl.flags import FLAGS
-import core.utils as utils
-from core.yolov4 import filter_boxes
-from tensorflow.python.saved_model import tag_constants
-from core.config import cfg
+import utils.utils as utils
+
+from config.defaults import cfg
 from PIL import Image
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow.compat.v1 import ConfigProto
-from tensorflow.compat.v1 import InteractiveSession
 # deep sort imports
 from deep_sort import preprocessing, nn_matching
 from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
 from tools import generate_detections as gdet
 
-flags.DEFINE_string('weights', './checkpoints/yolov4-416',
+
+#asdasd
+from modeling.yolo import Yolov4
+flags.DEFINE_string('weights','data/yolov4-custom2.weights',
                     'path to weights file')
 flags.DEFINE_integer('size', 416, 'resize images to')
-flags.DEFINE_string('video', './data/video/test.mp4', 'path to input video or set to 0 for webcam')
+flags.DEFINE_string('video', './data/video/test5.mpg', 'path to input video or set to 0 for webcam')
 flags.DEFINE_string('output', None, 'path to output video')
 flags.DEFINE_string('output_format', 'XVID', 'codec used in VideoWriter when saving video to file')
 flags.DEFINE_float('iou', 0.45, 'iou threshold')
@@ -40,7 +41,6 @@ def main(_argv):
     # Definition of the parameters
     max_cosine_distance = 0.4
     nn_budget = None
-    nms_max_overlap = 1.0
     
     # initialize deep sort
     model_filename = 'model_data/mars-small128.pb'
@@ -53,14 +53,12 @@ def main(_argv):
     # load configuration for object detector
     config = ConfigProto()
     config.gpu_options.allow_growth = True
-    session = InteractiveSession(config=config)
-    STRIDES, ANCHORS, NUM_CLASS, XYSCALE = utils.load_config()
+
     input_size = FLAGS.size
     video_path = FLAGS.video
 
-
-    saved_model_loaded = tf.saved_model.load(FLAGS.weights, tags=[tag_constants.SERVING])
-    infer = saved_model_loaded.signatures['serving_default']
+    model = Yolov4(weight_path=FLAGS.weights, 
+               class_name_path=cfg.YOLO.CLASSES)
 
     # begin video capture
     try:
@@ -91,55 +89,29 @@ def main(_argv):
             break
         frame_num +=1
         print('Frame #: ', frame_num)
-        frame_size = frame.shape[:2]
         image_data = cv2.resize(frame, (input_size, input_size))
         image_data = image_data / 255.
-        image_data = image_data[np.newaxis, ...].astype(np.float32)
         start_time = time.time()
+        preds = model.predict_img(frame)
 
-
-        batch_data = tf.constant(image_data)
-        pred_bbox = infer(batch_data)
-        for key, value in pred_bbox.items():
-            boxes = value[:, :, 0:4]
-            pred_conf = value[:, :, 4:]
-
-        boxes, scores, classes, valid_detections = tf.image.combined_non_max_suppression(
-            boxes=tf.reshape(boxes, (tf.shape(boxes)[0], -1, 1, 4)),
-            scores=tf.reshape(
-                pred_conf, (tf.shape(pred_conf)[0], -1, tf.shape(pred_conf)[-1])),
-            max_output_size_per_class=50,
-            max_total_size=50,
-            iou_threshold=FLAGS.iou,
-            score_threshold=FLAGS.score
-        )
-
-        # convert data to numpy arrays and slice out unused elements
-        num_objects = valid_detections.numpy()[0]
-        bboxes = boxes.numpy()[0]
-        bboxes = bboxes[0:int(num_objects)]
-        scores = scores.numpy()[0]
-        scores = scores[0:int(num_objects)]
-        classes = classes.numpy()[0]
-        classes = classes[0:int(num_objects)]
-
-        # format bounding boxes from normalized ymin, xmin, ymax, xmax ---> xmin, ymin, width, height
-        original_h, original_w, _ = frame.shape
-        bboxes = utils.format_boxes(bboxes, original_h, original_w)
+        bboxes = np.array([[_list[0], _list[1], _list[6], _list[7]] for _list in preds.values.tolist()], dtype=np.float32)
+        scores = np.array([_list[5] for _list in preds.values.tolist()], dtype=np.float32)
+        
+        num_objects = len(bboxes)
+        classes = np.array([0]*num_objects, dtype=np.float32)
+        
 
         # store all predictions in one parameter for simplicity when calling functions
         pred_bbox = [bboxes, scores, classes, num_objects]
-
+        
         # read in all class names from config
         class_names = utils.read_class_names(cfg.YOLO.CLASSES)
 
         # by default allow all classes in .names file
         allowed_classes = list(class_names.values())
-        
-        # custom allowed classes (uncomment line below to customize tracker for only people)
-        #allowed_classes = ['person']
 
         # loop through objects and use class index to get class name, allow only classes in allowed_classes list
+        print(bboxes)
         names = []
         deleted_indx = []
         for i in range(num_objects):
@@ -157,7 +129,7 @@ def main(_argv):
         # delete detections that are not in allowed_classes
         bboxes = np.delete(bboxes, deleted_indx, axis=0)
         scores = np.delete(scores, deleted_indx, axis=0)
-
+        
         # encode yolo detections and feed to tracker
         features = encoder(frame, bboxes)
         detections = [Detection(bbox, score, class_name, feature) for bbox, score, class_name, feature in zip(bboxes, scores, names, features)]
@@ -167,12 +139,9 @@ def main(_argv):
         colors = [cmap(i)[:3] for i in np.linspace(0, 1, 20)]
 
         # run non-maxima supression
-        boxs = np.array([d.tlwh for d in detections])
         scores = np.array([d.confidence for d in detections])
         classes = np.array([d.class_name for d in detections])
-        indices = preprocessing.non_max_suppression(boxs, classes, nms_max_overlap, scores)
-        detections = [detections[i] for i in indices]       
-
+  
         # Call the tracker
         tracker.predict()
         tracker.update(detections)
