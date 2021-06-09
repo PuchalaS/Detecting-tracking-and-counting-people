@@ -26,7 +26,7 @@ from tools import generate_detections as gdet
 from modeling.yolo import Yolov4
 flags.DEFINE_string('weights','data/yolov4-custom_best.weights',
                     'path to weights file')
-flags.DEFINE_string('video', './data/video/test5.mpg', 'path to input video or set to 0 for webcam')
+flags.DEFINE_string('video', './data/video/test2.mpg', 'path to input video or set to 0 for webcam')
 flags.DEFINE_string('output', None, 'path to output video')
 flags.DEFINE_string('output_format', 'XVID', 'codec used in VideoWriter when saving video to file')
 flags.DEFINE_boolean('dont_show', False, 'dont show video output')
