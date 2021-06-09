@@ -11,7 +11,6 @@ from absl.flags import FLAGS
 import utils.utils as utils
 
 from config.defaults import cfg
-from PIL import Image
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,12 +26,9 @@ from tools import generate_detections as gdet
 from modeling.yolo import Yolov4
 flags.DEFINE_string('weights','data/yolov4-custom2.weights',
                     'path to weights file')
-flags.DEFINE_integer('size', 416, 'resize images to')
 flags.DEFINE_string('video', './data/video/test5.mpg', 'path to input video or set to 0 for webcam')
 flags.DEFINE_string('output', None, 'path to output video')
 flags.DEFINE_string('output_format', 'XVID', 'codec used in VideoWriter when saving video to file')
-flags.DEFINE_float('iou', 0.45, 'iou threshold')
-flags.DEFINE_float('score', 0.50, 'score threshold')
 flags.DEFINE_boolean('dont_show', False, 'dont show video output')
 flags.DEFINE_boolean('info', False, 'show detailed info of tracked objects')
 flags.DEFINE_boolean('count', False, 'count objects being tracked on screen')
@@ -54,9 +50,10 @@ def main(_argv):
     config = ConfigProto()
     config.gpu_options.allow_growth = True
 
-    input_size = FLAGS.size
+    input_size = cfg.TRAIN.INPUT_SIZE  
     video_path = FLAGS.video
-
+    
+    #load model
     model = Yolov4(weight_path=FLAGS.weights, 
                class_name_path=cfg.YOLO.CLASSES)
 
@@ -83,12 +80,11 @@ def main(_argv):
         return_value, frame = vid.read()
         if return_value:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            image = Image.fromarray(frame)
         else:
             print('Video has ended or failed, try a different video format!')
             break
         frame_num +=1
-        print('Frame #: ', frame_num)
+        #print('Frame #: ', frame_num)
         image_data = cv2.resize(frame, (input_size, input_size))
         image_data = image_data / 255.
         start_time = time.time()
@@ -96,13 +92,8 @@ def main(_argv):
 
         bboxes = np.array([[_list[0], _list[1], _list[6], _list[7]] for _list in preds.values.tolist()], dtype=np.float32)
         scores = np.array([_list[5] for _list in preds.values.tolist()], dtype=np.float32)
-        
         num_objects = len(bboxes)
         classes = np.array([0]*num_objects, dtype=np.float32)
-        
-
-        # store all predictions in one parameter for simplicity when calling functions
-        pred_bbox = [bboxes, scores, classes, num_objects]
         
         # read in all class names from config
         class_names = utils.read_class_names(cfg.YOLO.CLASSES)
