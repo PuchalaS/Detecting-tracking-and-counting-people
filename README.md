@@ -2,15 +2,12 @@
 -  [Introduction](#introduction)
 -  [Requirements](#requirements)
 -  [Downloading custom YOLOv4 weights](#Downloading-custom-YOLOv4-weights)
--  [Training model](#training-model)
--  [Testing model](#testing-model)
--  [Testing model with SemEval scripts](#testing-model-with-semeval-scripts)
--  [Project structure](#project-structure)
--  [Pretrained RoBERTa](#pretrained-roberta)
+-  [Training custom yolo model](#Training-custom-yolo-model)
+-  [Command Line Args Reference](#Command-Line-Args-Reference)
 -  [Credits](#credits)
 
 ## Introduction
-Object tracking implemented with YOLOv4 (Keras), DeepSort (TensorFlow). YOLOv4 is a state of the art algorithm that uses deep convolutional neural networks to perform object detections. We can take the output of YOLOv4 feed these object detections into Deep SORT (Simple Online and Realtime Tracking with a Deep Association Metric) in order to create a highly accurate object tracker. Above pipeline was used on PAMELA-UANDES DATASET in order to detect, track and count people getting on and off a metropolitan train. 
+Object tracking implemented with YOLOv4 (Keras), DeepSort (TensorFlow). YOLOv4 is a state of the art algorithm that uses deep convolutional neural networks to perform object detections. We can take the output of YOLOv4 feed these object detections into Deep SORT (Simple Online and Realtime Tracking with a Deep Association Metric) in order to create a highly accurate object tracker. Above pipeline was used on PAMELA-UANDES [DATASET](http://videodatasets.org/PAMELA-UANDES) in order to detect, track and count people getting on and off a metropolitan train. 
 
 ## Requirements
 ```bash
@@ -39,12 +36,16 @@ As mentioned above, the resulting video will save to wherever you set the ``--ou
 Example video showing tracking of all coco dataset classes:
 <p align="center"><img src="data/helpers/all_classes.gif"\></p>
 
+## Training custom yolo model
+For creating custom yolov4 model Alex's [Darknet](https://github.com/AlexeyAB/darknet) was used. To start the procedure pamela-uandes [dataset](http://videodatasets.org/PAMELA-UANDES) need to be downloaded. Videos have to be put in adequate folders `data/dataset/video/test` and `data/dataset/video/train`. Csv annotation files have to be put in  `data/dataset/annotations/test` and `data/dataset/annotations/train` (these files are already in repo). To create images with proper yolo annotations run following command:
+```bash
+python ./tools/process_pamela.py
+```
+Then all you have to do is to follow instructions given in this [notebook](https://colab.research.google.com/drive/1zqRb08ljHvIIMR4fgAXeNy1kUtjDU85B?usp=sharing). The rest if needed custom config files are located in `data/darknet_files`. 
+
 ## Command Line Args Reference
 
 ```bash
-       USAGE: object_tracker.py [flags]
-flags:
-
 object_tracker.py:
   --[no]count: count objects being tracked on screen
     (default: 'false')
@@ -59,9 +60,28 @@ object_tracker.py:
     (default: './data/video/test5.mpg')
   --weights: path to weights file
     (default: 'data/yolov4-custom_best.weights')
+    
+.\tools\process_pamela.py:
+  --csv_dir: path to directory containing train and test annotations folders
+    (default: 'data/dataset/annotations')
+  --[no]dont_show: dont show video output
+    (default: 'false')
+  --output_dir: path to output video
+    (default: './outputs')
+  --output_format: codec used in VideoWriter when saving video to file
+    (default: 'XVID')
+  --output_images_dir: path to output video
+    (default: 'data/dataset/images')
+  --[no]save_GT_videos: save video with boxes from ground truth files
+    (default: 'false')
+  --size: resize images to
+    (default: '416')
+    (an integer)
+  --video_dir: path to directory containing train and test video folders
+    (default: 'data/dataset/video')
 ```
 
-### References  
+### Credits  
 
    Huge shoutout goes to hunglc007 and nwojke for creating the backbones of this repository:
   * [tensorflow-yolov4-tflite](https://github.com/hunglc007/tensorflow-yolov4-tflite)
