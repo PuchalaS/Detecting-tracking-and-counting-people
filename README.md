@@ -33,8 +33,8 @@ The output flag allows you to save the resulting video of the object tracker run
 
 As mentioned above, the resulting video will save to wherever you set the ``--output`` command line flag path to. I always set it to save to the 'outputs' folder. You can also change the type of video saved by adjusting the ``--output_format`` flag, by default it is set to AVI codec which is XVID.
 
-Example video showing tracking of all coco dataset classes:
-<p align="center"><img src="data/helpers/all_classes.gif"\></p>
+
+![before](data/helpers/before.gif) ![after](data/helpers/after.gif)
 
 ## Training custom yolo model
 For creating custom yolov4 model Alex's [Darknet](https://github.com/AlexeyAB/darknet) was used. To start the procedure pamela-uandes [dataset](http://videodatasets.org/PAMELA-UANDES) need to be downloaded. Videos have to be put in adequate folders `data/dataset/video/test` and `data/dataset/video/train`. Csv annotation files have to be put in  `data/dataset/annotations/test` and `data/dataset/annotations/train` (these files are already in repo). To create images with proper yolo annotations run following command:
