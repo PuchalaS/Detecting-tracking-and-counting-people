@@ -24,7 +24,7 @@ from tools import generate_detections as gdet
 
 #asdasd
 from modeling.yolo import Yolov4
-flags.DEFINE_string('weights','data/yolov4-custom2.weights',
+flags.DEFINE_string('weights','data/yolov4-custom_best.weights',
                     'path to weights file')
 flags.DEFINE_string('video', './data/video/test5.mpg', 'path to input video or set to 0 for webcam')
 flags.DEFINE_string('output', None, 'path to output video')
