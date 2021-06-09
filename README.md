@@ -33,7 +33,8 @@ The output flag allows you to save the resulting video of the object tracker run
 
 As mentioned above, the resulting video will save to wherever you set the ``--output`` command line flag path to. I always set it to save to the 'outputs' folder. You can also change the type of video saved by adjusting the ``--output_format`` flag, by default it is set to AVI codec which is XVID.
 
-Orginal YOLO vs Custom YOLO
+Orginal YOLO vs Custom YOLO:
+
 ![before](data/helpers/before.gif) ![after](data/helpers/after.gif)
 
 ## Training custom yolo model
