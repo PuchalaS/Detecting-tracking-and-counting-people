@@ -22,6 +22,18 @@ from deep_sort.tracker import Tracker
 from tools import generate_detections as gdet
 
 
+border_points = []
+
+# set mouse events
+def mouse_drawing(event, x, y, flags, params):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print("new border_point")
+        print(x, y)
+
+        border_points.append((x,y))
+        if len(border_points) > 2:
+            border_points.pop(0)
+
 #asdasd
 from modeling.yolo import Yolov4
 flags.DEFINE_string('weights','data/yolov4-custom_best.weights',
@@ -75,11 +87,14 @@ def main(_argv):
         out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
 
     frame_num = 0
+    new_objects_positions = {}
+    inside_persons_count = 0
     # while video is running
     while True:
         return_value, frame = vid.read()
         if return_value:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            cv2.setMouseCallback("Output Video", mouse_drawing)
         else:
             print('Video has ended or failed, try a different video format!')
             break
@@ -137,13 +152,17 @@ def main(_argv):
         tracker.predict()
         tracker.update(detections)
 
+        old_objects_positions = new_objects_positions
+        new_objects_positions = {}
+
+        inside_objects = []
         # update tracks
         for track in tracker.tracks:
             if not track.is_confirmed() or track.time_since_update > 1:
                 continue 
             bbox = track.to_tlbr()
             class_name = track.get_class()
-            
+
         # draw bbox on screen
             color = colors[int(track.track_id) % len(colors)]
             color = [i * 255 for i in color]
@@ -154,6 +173,45 @@ def main(_argv):
         # if enable info flag then print details about each track
             if FLAGS.info:
                 print("Tracker ID: {}, Class: {},  BBox Coords (xmin, ymin, xmax, ymax): {}".format(str(track.track_id), class_name, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))))
+
+        # save persons positions
+            px = ( int((bbox[2] + bbox[0])/2), int((bbox[1] + bbox[3])/2) )
+            cv2.circle(frame, (px[0], px[1]), 4, (0, 0, 255), -1)
+            new_objects_positions[track.track_id] = [px, 0]
+            
+
+        # draw border
+        for p in border_points:
+            cv2.circle(frame, (p[0], p[1]), 4, (0, 0, 255), -1)
+
+        if len(border_points) == 2:
+            # draw border
+            cv2.line(frame, border_points[0], border_points[1], (0, 255, 255), 2)
+
+            # draw vector meaning interior
+            start_point = (int((border_points[0][0] + border_points[1][0])/2),  
+                           int((border_points[0][1] + border_points[1][1])/2))
+
+            end_point =  ((int((start_point[1] - border_points[0][1])/2)) + start_point[0], 
+                          (int((start_point[0] - border_points[0][0])/2) * (-1)) + start_point[1])
+
+            cv2.arrowedLine(frame, start_point, end_point, (255, 0, 0), 2)
+
+            n = (end_point[0] - start_point[0], end_point[1] - start_point[1])
+
+            for id, coordinate in new_objects_positions.items():
+                v = ( coordinate[0][0] - start_point[0], coordinate[0][1] - start_point[1] )
+                # calculate scalar product 
+                coordinate[1] = np.sign(v[0]*n[0] + v[1]*n[1])
+                print("Tracker ID: {}, Class: {},  Site: {}".format(str(track.track_id), class_name, (coordinate)))
+                if id in old_objects_positions:
+                    if (old_objects_positions[id][1] == -1) and coordinate[1] == 1:
+                        inside_persons_count = inside_persons_count + 1
+                    elif (old_objects_positions[id][1] == 1) and coordinate[1] == -1:
+                        inside_persons_count = inside_persons_count - 1
+                
+        print("num of person inside: {}".format(inside_persons_count))
+
 
         # calculate frames per second of running detections
         fps = 1.0 / (time.time() - start_time)
