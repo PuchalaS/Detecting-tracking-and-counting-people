@@ -210,6 +210,7 @@ def main(_argv):
                     elif (old_objects_positions[id][1] == 1) and coordinate[1] == -1:
                         inside_persons_count = inside_persons_count - 1
                 
+        # print number of person inside
         print("num of person inside: {}".format(inside_persons_count))
 
 
