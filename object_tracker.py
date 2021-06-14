@@ -21,6 +21,11 @@ from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
 from tools import generate_detections as gdet
 
+# MOTA metrics imports
+import motmetrics as mm
+
+# csv imports
+import csv
 
 border_points = []
 
@@ -77,6 +82,26 @@ def main(_argv):
 
     out = None
 
+
+    # Create an accumulator that will be updated during each frame
+    acc = mm.MOTAccumulator(auto_id=True)
+
+    # Read training rectangles 
+    name = 'data/dataset/annotations/train/A_d800mm_R1-Filt.csv'
+    train_rectangles = {}
+
+    with open(name) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        for row in csv_reader:  
+            frame = int(row[0])
+            id =    int(row[1])
+
+            if train_rectangles.get(frame) is None:
+                train_rectangles[frame] = [[], []]
+            train_rectangles[frame][0].append(id)
+            train_rectangles[frame][1].append([row[3], row[4], row[5], row[6]])
+
+
     # get video ready to save locally if flag is set
     if FLAGS.output:
         # by default VideoCapture returns float instead of int
@@ -89,8 +114,10 @@ def main(_argv):
     frame_num = 0
     new_objects_positions = {}
     inside_persons_count = 0
+
     # while video is running
     while True:
+        print("_________________________________________________________________________________")
         return_value, frame = vid.read()
         if return_value:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -98,6 +125,7 @@ def main(_argv):
         else:
             print('Video has ended or failed, try a different video format!')
             break
+        print("frame: " + str(frame_num))
         frame_num +=1
         #print('Frame #: ', frame_num)
         image_data = cv2.resize(frame, (input_size, input_size))
@@ -155,6 +183,9 @@ def main(_argv):
         old_objects_positions = new_objects_positions
         new_objects_positions = {}
 
+        actual_rectangles = []
+        detected_ids = []
+
         inside_objects = []
         # update tracks
         for track in tracker.tracks:
@@ -170,15 +201,27 @@ def main(_argv):
             cv2.rectangle(frame, (int(bbox[0]), int(bbox[1]-30)), (int(bbox[0])+(len(class_name)+len(str(track.track_id)))*17, int(bbox[1])), color, -1)
             cv2.putText(frame, class_name + "-" + str(track.track_id),(int(bbox[0]), int(bbox[1]-10)),0, 0.75, (255,255,255),2)
 
+
         # if enable info flag then print details about each track
             if FLAGS.info:
                 print("Tracker ID: {}, Class: {},  BBox Coords (xmin, ymin, xmax, ymax): {}".format(str(track.track_id), class_name, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3]))))
 
         # save persons positions
             px = ( int((bbox[2] + bbox[0])/2), int((bbox[1] + bbox[3])/2) )
-            cv2.circle(frame, (px[0], px[1]), 4, (0, 0, 255), -1)
             new_objects_positions[track.track_id] = [px, 0]
-            
+        
+        # save rectangle
+            actual_rectangles.append([int(bbox[0]), int(bbox[1]), int(bbox[2]-bbox[0]), int(bbox[3]-bbox[1])])
+            detected_ids.append(track.track_id)
+
+
+        # evaluate      
+        if frame_num in train_rectangles:
+            print("___ METRICS ___")
+            C = mm.distances.iou_matrix(actual_rectangles, train_rectangles[frame_num][1], max_iou=0.5)
+            print(C)
+            frameid = acc.update( detected_ids, train_rectangles[frame_num][0], C )
+            print(acc.mot_events.loc[frameid])
 
         # draw border
         for p in border_points:
@@ -228,6 +271,25 @@ def main(_argv):
             out.write(result)
         if cv2.waitKey(1) & 0xFF == ord('q'): break
     cv2.destroyAllWindows()
+
+
+    # print summary
+    print(" ___MOTA___ ")
+    mh = mm.metrics.create()
+
+    summary = mh.compute_many(
+        [acc, acc.events.loc[0:1]],
+        metrics=mm.metrics.motchallenge_metrics,
+        names=['full', 'part'],
+        generate_overall=True
+    )
+
+    strsummary = mm.io.render_summary(
+        summary,
+        formatters=mh.formatters,
+        namemap=mm.io.motchallenge_metric_names
+    )
+    print(strsummary)
 
 if __name__ == '__main__':
     try:
