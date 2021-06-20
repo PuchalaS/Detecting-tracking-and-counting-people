@@ -3,6 +3,8 @@
 -  [Requirements](#requirements)
 -  [Downloading custom YOLOv4 weights](#Downloading-custom-YOLOv4-weights)
 -  [Training custom yolo model](#Training-custom-yolo-model)
+-  [Counting people](#Counting-people)
+-  [Evaluation](#evaluation)
 -  [Command Line Args Reference](#Command-Line-Args-Reference)
 -  [Credits](#credits)
 
@@ -44,11 +46,29 @@ python ./tools/process_pamela.py
 ```
 Then all you have to do is to follow instructions given in this [notebook](https://colab.research.google.com/drive/1zqRb08ljHvIIMR4fgAXeNy1kUtjDU85B?usp=sharing). The rest if needed custom config files are located in `data/darknet_files`. 
 
-## Command Line Args Reference
+## Counting people 
+To enable counting run tracker with following command:
+```bash
+python object_tracker.py --output outputs/output.avi --count
+```
+As soon as the video starts processing you will be presented with the output widow. Then you will be able to choose 2 points on the screen creating virtual line. People crossing this line will be counted. 
 
+## Evaluation
+To evaluate detection AP first you need to run following commands:
+```bash
+#create txt files for every frame and process pamela ground truth files
+python ./tools/create_files_for_evaluation.py 
+#calculate mAP based on created files
+python ./tools/calculate_map.py 
+```
+To evaluate detection metrics run following command:
+```bash
+python object_tracker.py --track_eval
+```
+## Command Line Args Reference
 ```bash
 object_tracker.py:
-  --[no]count: count objects being tracked on screen
+  --[no]count: count people crossing the line the on screen
     (default: 'false')
   --[no]dont_show: dont show video output
     (default: 'false')
@@ -57,8 +77,12 @@ object_tracker.py:
   --output: path to output video
   --output_format: codec used in VideoWriter when saving video to file
     (default: 'XVID')
+  --[no]track_eval: enable tracking evaluation
+    (default: 'false')
+  --track_eval_gt_path: path to csv GT file from PAMELA dataset
+    (default: 'data/dataset/annotations/train/A_d800mm_R1-Filt.csv')
   --video: path to input video or set to 0 for webcam
-    (default: './data/video/test5.mpg')
+    (default: './data/video/test2.mpg')
   --weights: path to weights file
     (default: 'data/yolov4-custom_best.weights')
     
