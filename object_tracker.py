@@ -157,9 +157,8 @@ def main(_argv):
                 names.append(class_name)
         names = np.array(names)
         count = len(names)
-        if FLAGS.count:
-            cv2.putText(frame, "Objects being tracked: {}".format(count), (5, 35), cv2.FONT_HERSHEY_COMPLEX_SMALL, 2, (0, 255, 0), 2)
-            print("Objects being tracked: {}".format(count))
+
+
         # delete detections that are not in allowed_classes
         bboxes = np.delete(bboxes, deleted_indx, axis=0)
         scores = np.delete(scores, deleted_indx, axis=0)
@@ -224,40 +223,41 @@ def main(_argv):
                 frameid = acc.update( detected_ids, train_rectangles[frame_num][0], C )
                 print(acc.mot_events.loc[frameid])
 
-        # draw border
-        for p in border_points:
-            cv2.circle(frame, (p[0], p[1]), 4, (0, 0, 255), -1)
-
-        if len(border_points) == 2:
+        if FLAGS.count:
             # draw border
-            cv2.line(frame, border_points[0], border_points[1], (0, 255, 255), 2)
+            for p in border_points:
+                cv2.circle(frame, (p[0], p[1]), 4, (0, 0, 255), -1)
 
-            # draw vector meaning interior
-            start_point = (int((border_points[0][0] + border_points[1][0])/2),  
-                           int((border_points[0][1] + border_points[1][1])/2))
+            if len(border_points) == 2:
+                # draw border
+                cv2.line(frame, border_points[0], border_points[1], (0, 255, 255), 2)
 
-            end_point =  ((int((start_point[1] - border_points[0][1])/2)) + start_point[0], 
-                          (int((start_point[0] - border_points[0][0])/2) * (-1)) + start_point[1])
+                # draw vector meaning interior
+                start_point = (int((border_points[0][0] + border_points[1][0])/2),  
+                            int((border_points[0][1] + border_points[1][1])/2))
 
-            cv2.arrowedLine(frame, start_point, end_point, (255, 0, 0), 2)
+                end_point =  ((int((start_point[1] - border_points[0][1])/2)) + start_point[0], 
+                            (int((start_point[0] - border_points[0][0])/2) * (-1)) + start_point[1])
 
-            n = (end_point[0] - start_point[0], end_point[1] - start_point[1])
+                cv2.arrowedLine(frame, start_point, end_point, (255, 0, 0), 2)
 
-            for id, coordinate in new_objects_positions.items():
-                v = ( coordinate[0][0] - start_point[0], coordinate[0][1] - start_point[1] )
-                # calculate scalar product 
-                coordinate[1] = np.sign(v[0]*n[0] + v[1]*n[1])
-                print("Tracker ID: {}, Class: {},  Site: {}".format(str(track.track_id), class_name, (coordinate)))
-                if id in old_objects_positions:
-                    if (old_objects_positions[id][1] == -1) and coordinate[1] == 1:
-                        inside_persons_count = inside_persons_count + 1
-                    elif (old_objects_positions[id][1] == 1) and coordinate[1] == -1:
-                        inside_persons_count = inside_persons_count - 1
-                
-        # print number of person inside
-        print("num of person inside: {}".format(inside_persons_count))
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        cv2.putText(frame, f'Crossed the line: {inside_persons_count}', (0 + 10, height- 10), font, 0.5, (255,255,0), 1, cv2.LINE_4)
+                n = (end_point[0] - start_point[0], end_point[1] - start_point[1])
+
+                for id, coordinate in new_objects_positions.items():
+                    v = ( coordinate[0][0] - start_point[0], coordinate[0][1] - start_point[1] )
+                    # calculate scalar product 
+                    coordinate[1] = np.sign(v[0]*n[0] + v[1]*n[1])
+                    print("Tracker ID: {}, Class: {},  Site: {}".format(str(track.track_id), class_name, (coordinate)))
+                    if id in old_objects_positions:
+                        if (old_objects_positions[id][1] == -1) and coordinate[1] == 1:
+                            inside_persons_count = inside_persons_count + 1
+                        elif (old_objects_positions[id][1] == 1) and coordinate[1] == -1:
+                            inside_persons_count = inside_persons_count - 1
+                    
+            # print number of person inside
+            print("num of person inside: {}".format(inside_persons_count))
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            cv2.putText(frame, f'People inside: {inside_persons_count}', (0 + 10, height- 10), font, 0.5, (255,255,0), 1, cv2.LINE_4)
 
         # calculate frames per second of running detections
         fps = 1.0 / (time.time() - start_time)
