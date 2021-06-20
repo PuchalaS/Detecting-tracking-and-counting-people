@@ -51,8 +51,15 @@ To enable counting run tracker with following command:
 ```bash
 python object_tracker.py --output outputs/output.avi --count
 ```
-As soon as the video starts processing you will be presented with the output widow. Then you will be able to choose 2 points on the screen creating virtual line. People crossing this line will be counted. 
+As soon as the video starts processing you will be presented with the output widow. Then you will be able to choose 2 points on the screen creating virtual line. People crossing this line will be counted.
 
+Create line:
+
+![line](data/helpers/line.gif)
+
+Final output:
+
+![final](data/helpers/final.gif)
 ## Evaluation
 To evaluate detection AP first you need to run following commands:
 ```bash
@@ -65,6 +72,9 @@ To evaluate detection metrics run following command:
 ```bash
 python object_tracker.py --track_eval
 ```
+PR curve:
+
+![PR](data/helpers/PR_curve.png)
 ## Command Line Args Reference
 ```bash
 object_tracker.py:
@@ -108,11 +118,9 @@ object_tracker.py:
 
 ### Credits  
 
-   Huge shoutout goes to hunglc007 and nwojke for creating the backbones of this repository:
   * [tensorflow-yolov4-tflite](https://github.com/hunglc007/tensorflow-yolov4-tflite)
   * [Deep SORT Repository](https://github.com/nwojke/deep_sort)
+  * [Deep SORT + YOLO](https://github.com/theAIGuysCode/yolov4-deepsort)
+  * [Calculating mAP](https://github.com/Cartucho/mAP)
+  * [Tracking evaluation](https://github.com/cheind/py-motmetrics)
 
-### To do:
-- dorobić logikę aplikacji zliczającą wchodzących i wychodzących ludzi 
-- evaluacja śledzenia (MOTA)
-- 
