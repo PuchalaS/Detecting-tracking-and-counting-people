@@ -255,7 +255,8 @@ def main(_argv):
                 
         # print number of person inside
         print("num of person inside: {}".format(inside_persons_count))
-
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cv2.putText(frame, f'Crossed the line: {inside_persons_count}', (0 + 10, height- 10), font, 0.5, (255,255,0), 1, cv2.LINE_4)
 
         # calculate frames per second of running detections
         fps = 1.0 / (time.time() - start_time)
