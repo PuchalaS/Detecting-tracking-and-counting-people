@@ -6,7 +6,7 @@ import operator
 import sys
 import argparse
 import math
-
+sys.path.append('.')
 import numpy as np
 
 MINOVERLAP = 0.5 # default value (defined in the PASCAL VOC2012 challenge)
