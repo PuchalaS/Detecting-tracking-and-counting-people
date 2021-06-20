@@ -50,6 +50,8 @@ flags.DEFINE_boolean('dont_show', False, 'dont show video output')
 flags.DEFINE_boolean('info', False, 'show detailed info of tracked objects')
 flags.DEFINE_boolean('count', False, 'count objects being tracked on screen')
 
+flags.DEFINE_boolean('track_eval', False, 'enable tracking evaluation')
+flags.DEFINE_string('track_eval_gt_path', 'data/dataset/annotations/train/A_d800mm_R1-Filt.csv', 'path to csv GT file from PAMELA dataset')
 def main(_argv):
     # Definition of the parameters
     max_cosine_distance = 0.4
@@ -81,25 +83,23 @@ def main(_argv):
         vid = cv2.VideoCapture(video_path)
 
     out = None
-
-
     # Create an accumulator that will be updated during each frame
     acc = mm.MOTAccumulator(auto_id=True)
 
-    # Read training rectangles 
-    name = 'data/dataset/annotations/train/A_d800mm_R1-Filt.csv'
-    train_rectangles = {}
+    if FLAGS.track_eval:
+        name = FLAGS.track_eval_gt_path
+        train_rectangles = {}
 
-    with open(name) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
-        for row in csv_reader:  
-            frame = int(row[0])
-            id =    int(row[1])
+        with open(name) as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            for row in csv_reader:  
+                frame = int(row[0])
+                id =    int(row[1])
 
-            if train_rectangles.get(frame) is None:
-                train_rectangles[frame] = [[], []]
-            train_rectangles[frame][0].append(id)
-            train_rectangles[frame][1].append([row[3], row[4], row[5], row[6]])
+                if train_rectangles.get(frame) is None:
+                    train_rectangles[frame] = [[], []]
+                train_rectangles[frame][0].append(id)
+                train_rectangles[frame][1].append([row[3], row[4], row[5], row[6]])
 
 
     # get video ready to save locally if flag is set
@@ -215,13 +215,14 @@ def main(_argv):
             detected_ids.append(track.track_id)
 
 
-        # evaluate      
-        if frame_num in train_rectangles:
-            print("___ METRICS ___")
-            C = mm.distances.iou_matrix(actual_rectangles, train_rectangles[frame_num][1], max_iou=0.5)
-            print(C)
-            frameid = acc.update( detected_ids, train_rectangles[frame_num][0], C )
-            print(acc.mot_events.loc[frameid])
+        # evaluate 
+        if FLAGS.track_eval:     
+            if frame_num in train_rectangles:
+                print("___ METRICS ___")
+                C = mm.distances.iou_matrix(actual_rectangles, train_rectangles[frame_num][1], max_iou=0.5)
+                print(C)
+                frameid = acc.update( detected_ids, train_rectangles[frame_num][0], C )
+                print(acc.mot_events.loc[frameid])
 
         # draw border
         for p in border_points:
