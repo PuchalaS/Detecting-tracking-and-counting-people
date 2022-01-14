@@ -55,9 +55,7 @@ def bbox_giou(boxes1, boxes2):
     enclose_xy = enclose_bottom_right - enclose_top_left
     enclose_area = enclose_xy[..., 0] * enclose_xy[..., 1]
 
-    giou = iou - tf.math.divide_no_nan(enclose_area - union_area, enclose_area)
-
-    return giou
+    return iou - tf.math.divide_no_nan(enclose_area - union_area, enclose_area)
 
 
 def bbox_ciou(boxes1, boxes2):
@@ -109,8 +107,7 @@ def bbox_ciou(boxes1, boxes2):
     v = 4.0 * K.pow(atan1 - atan2, 2) / (math.pi ** 2)
     a = v / (1 - iou + v)
 
-    ciou = iou - 1.0 * p2 / enclose_c2 - 1.0 * a * v
-    return ciou
+    return iou - 1.0 * p2 / enclose_c2 - 1.0 * a * v
 
 
 def yolo_loss(args, num_classes, iou_loss_thresh, anchors):

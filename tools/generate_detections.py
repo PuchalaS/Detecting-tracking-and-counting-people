@@ -144,9 +144,7 @@ def generate_detections(encoder, mot_dir, output_dir, detection_dir=None):
     try:
         os.makedirs(output_dir)
     except OSError as exception:
-        if exception.errno == errno.EEXIST and os.path.isdir(output_dir):
-            pass
-        else:
+        if exception.errno != errno.EEXIST or not os.path.isdir(output_dir):
             raise ValueError(
                 "Failed to created output directory '%s'" % output_dir)
 
