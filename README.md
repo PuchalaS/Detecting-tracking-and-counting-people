@@ -1,7 +1,7 @@
 # Table of contents
 -  [Introduction](#introduction)
 -  [Requirements](#requirements)
--  [Downloading custom YOLOv4 weights](#Downloading-custom-YOLOv4-weights)
+-  [Downloading custom YOLOv4 weights](#custom-YOLOv4-weights)
 -  [Training custom yolo model](#Training-custom-yolo-model)
 -  [Counting people](#Counting-people)
 -  [Evaluation](#evaluation)
@@ -16,12 +16,8 @@ Object tracking implemented with YOLOv4 (Keras), DeepSort (TensorFlow). YOLOv4 i
 pip install -r requirements.txt
 ```
 
-## Downloading custom YOLOv4 weights
+## Custom YOLOv4 weights
 Our object tracker uses YOLOv4 to make the object detections, which deep sort then uses to track. There exists an official pre-trained YOLOv4 object detector model that is able to detect 80 classes. Unfortunately default detection fails when used on videos from PAMELA-UANDES DATASET. In order to fix that problem custom YOLO model had to be trained. Entire procedure is described here. 
-
-Download custom yolov4-custom_best.weights file: https://drive.google.com/file/d/16rHphzm1DD0wivlq7yxn1U8AounwHQN6/view?usp=sharing
-
-Copy and paste yolov4-custom_best.weights from your downloads folder into the 'data' folder of this repository.
 
 ## Running the Tracker with YOLOv4
 All we need to do is run the object_tracker.py script to run our object tracker with YOLOv4 and DeepSort.
