@@ -58,7 +58,7 @@ def csp_block(x, residual_out, repeat, residual_bottleneck=False):
     route = x
     route = conv(route, residual_out, 1, activation="mish")
     x = conv(x, residual_out, 1, activation="mish")
-    for i in range(repeat):
+    for _ in range(repeat):
         x = residual_block(x,
                            residual_out // 2 if residual_bottleneck else residual_out,
                            residual_out,
@@ -73,25 +73,25 @@ def darknet53(x):
     x = conv(x, 32, 3)
     x = conv(x, 64, 3, downsampling=True)
 
-    for i in range(1):
+    for _ in range(1):
         x = residual_block(x, 32, 64)
     x = conv(x, 128, 3, downsampling=True)
 
-    for i in range(2):
+    for _ in range(2):
         x = residual_block(x, 64, 128)
     x = conv(x, 256, 3, downsampling=True)
 
-    for i in range(8):
+    for _ in range(8):
         x = residual_block(x, 128, 256)
     route_1 = x
     x = conv(x, 512, 3, downsampling=True)
 
-    for i in range(8):
+    for _ in range(8):
         x = residual_block(x, 256, 512)
     route_2 = x
     x = conv(x, 1024, 3, downsampling=True)
 
-    for i in range(4):
+    for _ in range(4):
         x = residual_block(x, 512, 1024)
 
     return route_1, route_2, x
@@ -211,11 +211,9 @@ def yolov4_head(yolo_neck_outputs, classes, anchors, xyscale):
                                                                             anchors=anchors[2, :, :], classes=classes,
                                                                             grid_size=13, strides=32,
                                                                             xyscale=xyscale[2])
-    x = [bbox0, object_probability0, class_probabilities0, pred_box0,
+    return [bbox0, object_probability0, class_probabilities0, pred_box0,
          bbox1, object_probability1, class_probabilities1, pred_box1,
          bbox2, object_probability2, class_probabilities2, pred_box2]
-
-    return x
 
 
 def get_boxes(pred, anchors, classes, grid_size, strides, xyscale):

@@ -96,7 +96,7 @@ def draw_bbox(img, detections, cmap, random_color=True, figsize=(10, 10), show_i
     :return: None
     """
     img = np.array(img)
-    scale = max(img.shape[0:2]) / 416
+    scale = max(img.shape[:2]) / 416
     line_width = int(2 * scale)
 
     for _, row in detections.iterrows():
@@ -341,10 +341,7 @@ def voc_ap(rec, prec):
      This part creates a list of indexes where the recall changes
         matlab: i=find(mrec(2:end)~=mrec(1:end-1))+1;
     """
-    i_list = []
-    for i in range(1, len(mrec)):
-        if mrec[i] != mrec[i-1]:
-            i_list.append(i) # if it was matlab would be i + 1
+    i_list = [i for i in range(1, len(mrec)) if mrec[i] != mrec[i-1]]
     """
      The Average Precision (AP) is the area under the curve
         (numerical integration)
@@ -381,9 +378,6 @@ def draw_plot_func(dictionary, n_classes, window_title, plot_title, x_label, out
         plt.barh(range(n_classes), tp_sorted, align='center', color='forestgreen', label='True Positive', left=fp_sorted)
         # add legend
         plt.legend(loc='lower right')
-        """
-         Write number on side of bar
-        """
         fig = plt.gcf() # gcf - get current figure
         axes = plt.gca()
         r = fig.canvas.get_renderer()
@@ -400,9 +394,6 @@ def draw_plot_func(dictionary, n_classes, window_title, plot_title, x_label, out
                 adjust_axes(r, t, fig, axes)
     else:
         plt.barh(range(n_classes), sorted_values, color=plot_color)
-        """
-         Write number on side of bar
-        """
         fig = plt.gcf() # gcf - get current figure
         axes = plt.gca()
         r = fig.canvas.get_renderer()
@@ -414,6 +405,9 @@ def draw_plot_func(dictionary, n_classes, window_title, plot_title, x_label, out
             # re-set axes to show number inside the figure
             if i == (len(sorted_values)-1): # largest bar
                 adjust_axes(r, t, fig, axes)
+    """
+         Write number on side of bar
+        """
     # set window title
     fig.canvas.set_window_title(window_title)
     # write classes in y axis

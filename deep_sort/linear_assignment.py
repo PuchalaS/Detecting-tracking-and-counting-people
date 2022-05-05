@@ -130,7 +130,7 @@ def matching_cascade(
             k for k in track_indices
             if tracks[k].time_since_update == 1 + level
         ]
-        if len(track_indices_l) == 0:  # Nothing to match at this level
+        if not track_indices_l:  # Nothing to match at this level
             continue
 
         matches_l, _, unmatched_detections = \
@@ -138,7 +138,7 @@ def matching_cascade(
                 distance_metric, max_distance, tracks, detections,
                 track_indices_l, unmatched_detections)
         matches += matches_l
-    unmatched_tracks = list(set(track_indices) - set(k for k, _ in matches))
+    unmatched_tracks = list(set(track_indices) - {k for k, _ in matches})
     return matches, unmatched_tracks, unmatched_detections
 
 

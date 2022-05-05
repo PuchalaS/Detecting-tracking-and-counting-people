@@ -19,24 +19,21 @@ classes = get_classes(CLASSES_PATH)
 assert len(classes) > 0, 'no class names detected!'
 print(f'num classes: {len(classes)}')
 
-# output file
-list_file = open(TXT_PATH, 'w')
+with open(TXT_PATH, 'w') as list_file:
+    for path in glob(os.path.join(XML_PATH, '*.xml')):
+        in_file = open(path)
 
-for path in glob(os.path.join(XML_PATH, '*.xml')):
-    in_file = open(path)
-
-    # Parse .xml file
-    tree = ET.parse(in_file)
-    root = tree.getroot()
-    # Write object information to .txt file
-    file_name = root.find('filename').text
-    print(file_name)
-    list_file.write(file_name)
-    for obj in root.iter('object'):
-        cls = obj.find('name').text 
-        cls_id = classes.index(cls)
-        xmlbox = obj.find('bndbox')
-        b = (int(xmlbox.find('xmin').text), int(xmlbox.find('ymin').text), int(xmlbox.find('xmax').text), int(xmlbox.find('ymax').text))
-        list_file.write(" " + ",".join([str(a) for a in b]) + ',' + str(cls_id))
-    list_file.write('\n')
-list_file.close()
+        # Parse .xml file
+        tree = ET.parse(in_file)
+        root = tree.getroot()
+        # Write object information to .txt file
+        file_name = root.find('filename').text
+        print(file_name)
+        list_file.write(file_name)
+        for obj in root.iter('object'):
+            cls = obj.find('name').text 
+            cls_id = classes.index(cls)
+            xmlbox = obj.find('bndbox')
+            b = (int(xmlbox.find('xmin').text), int(xmlbox.find('ymin').text), int(xmlbox.find('xmax').text), int(xmlbox.find('ymax').text))
+            list_file.write(" " + ",".join([str(a) for a in b]) + ',' + str(cls_id))
+        list_file.write('\n')

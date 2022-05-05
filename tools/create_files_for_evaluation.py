@@ -37,7 +37,7 @@ def main(_argv):
     #annot_files = 
     print(video_paths)
     create_dirs(['/data/dataset/input/detection-results' ,'/data/dataset/input/ground-truth'])
-    
+
     for _set in ["test"]:
         for video_path in video_paths[_set]:
 
@@ -69,7 +69,7 @@ def main(_argv):
                 frame_num +=1
                 print('Frame #: ', frame_num)
 
-            
+
                 image_data = cv2.resize(frame, (input_size, input_size))
                 image_data = image_data / 255.
                 image_data = image_data[np.newaxis, ...].astype(np.float32)
@@ -79,7 +79,7 @@ def main(_argv):
                 frames_data_this_frame = frame_data[frame_data['frame_nr'] == frame_num].values.tolist()
 
                 eval_file = []
-                for dx, data_this_frame in enumerate(frames_data_this_frame):
+                for data_this_frame in frames_data_this_frame:
                     person_id = data_this_frame[1]
                     top_x = data_this_frame[3]
                     top_y = data_this_frame[4]

@@ -34,9 +34,9 @@ def main(_argv):
     #annot_files = 
     print(video_paths)
     create_dirs([FLAGS.output_images_dir + '/train' , FLAGS.output_images_dir + '/test'])
-    
+
+    processed_csv_data = []
     for _set in ["test", "train"]:
-        processed_csv_data = []
         for video_path in video_paths[_set]:
 
             try:
@@ -61,7 +61,7 @@ def main(_argv):
             print(frame_data)
 
             while True:
-                
+
                 return_value, frame = vid.read()
                 if return_value:
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -72,7 +72,7 @@ def main(_argv):
                 frame_num +=1
                 print('Frame #: ', frame_num)
 
-            
+
                 image_data = cv2.resize(frame, (input_size, input_size))
                 image_data = image_data / 255.
                 image_data = image_data[np.newaxis, ...].astype(np.float32)
@@ -100,14 +100,14 @@ def main(_argv):
                         frame_name = "0" + str(frame_num)
                     else:
                         frame_name = str(frame_num)
-                    
+
                     save_name_jpg = (f"{FLAGS.output_images_dir}/{_set}/{file_name[:-4]}_{frame_name}.jpg")
                     save_name_annot = (f"{FLAGS.output_images_dir}/{_set}/{file_name[:-4]}_{frame_name}.txt")
                     if dx == 0:
                         cv2.imwrite(save_name_jpg, frame)
                     yolo_annot = (f"0 {center_x/width} {center_y/height} {box_width/width} {box_height/height}")
                     txt_file.append(yolo_annot)
-                
+
 
                     # draw bbox on screen
                     color = colors[int(person_id) % len(colors)]
@@ -116,7 +116,7 @@ def main(_argv):
                     cv2.rectangle(frame, (int(top_x), int(top_y) -30), (int(top_x)+(len('person')+len(str(person_id)))*16,  int(top_y)), color, -1)
                     cv2.putText(frame, 'person' + "-" + str(person_id),(int(top_x), int(top_y-10)),0, 0.75, (255,255,255),2)
 
-                    
+
                 if save_name_annot:
                     with open(save_name_annot, "w") as f:
                         for line in txt_file:
@@ -124,15 +124,15 @@ def main(_argv):
 
                 result = np.asarray(frame)
                 result = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-                
+
                 if not FLAGS.dont_show:
                     cv2.imshow("Output Video", result)
-                
+
                 # if output flag is set, save video file
                 if FLAGS.save_GT_videos:
                     out.write(result)
                 if cv2.waitKey(1) & 0xFF == ord('q'): break
-                
+
 
             cv2.destroyAllWindows()
 

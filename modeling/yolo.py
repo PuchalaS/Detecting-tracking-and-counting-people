@@ -27,11 +27,11 @@ class Yolov4(object):
         self.weight_path = weight_path
         self.anchors = np.array(cfg.YOLO.ANCHORS).reshape((3, 3, 2))
         self.xyscale = cfg.YOLO.XYSCALE
-        self.strides = cfg.YOLO.STRIDES 
+        self.strides = cfg.YOLO.STRIDES
         self.output_sizes = [self.img_size[0] // s for s in self.strides]
         self.class_color = {name: list(np.random.random(size=3)*255) for name in self.class_names}
         # Training
-        self.max_boxes = cfg.TEST.MAX_BOXES 
+        self.max_boxes = cfg.TEST.MAX_BOXES
         self.iou_loss_thresh = cfg.YOLO.IOU_LOSS_THRESH
         self.config = cfg
         assert self.num_classes > 0, 'no classes detected!'
@@ -40,9 +40,9 @@ class Yolov4(object):
         if cfg.TRAIN.NUM_GPU  > 1:
             mirrored_strategy = tf.distribute.MirroredStrategy()
             with mirrored_strategy.scope():
-                self.build_model(load_pretrained=True if self.weight_path else False)
+                self.build_model(load_pretrained=bool(self.weight_path))
         else:
-            self.build_model(load_pretrained=True if self.weight_path else False)
+            self.build_model(load_pretrained=bool(self.weight_path))
 
     def build_model(self, load_pretrained=True):
         # core yolo model
@@ -116,10 +116,7 @@ class Yolov4(object):
 
         output_img = draw_bbox(raw_img, detections, cmap=self.class_color, random_color=random_color, figsize=figsize,
                   show_text=show_text, show_img=plot_img)
-        if return_output:
-            return output_img, detections
-        else:
-            return detections
+        return (output_img, detections) if return_output else detections
 
     def predict(self, img_path, random_color=False, plot_img=False, figsize=(10, 10), show_text=True):
         raw_img = cv2.imread(img_path)[:, :, ::-1]
